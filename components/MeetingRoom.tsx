@@ -2,10 +2,12 @@
 import React, { useState } from "react";
 import {
   CallControls,
+  CallingState,
   CallParticipantsList,
   CallStatsButton,
   PaginatedGridLayout,
   SpeakerLayout,
+  useCallStateHooks,
 } from "@stream-io/video-react-sdk";
 import {
   DropdownMenu,
@@ -17,12 +19,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { LayoutList, Users } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import EndCallButton from "./EndCallButton";
+import Loader from "./Loader";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 
 const MeetingRoom = () => {
+  const searchParams = useSearchParams();
+  const isPersonalRoom = !!searchParams.get("personal");
   const [showParticipants, setShowParticipants] = useState(false);
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
+
+  const { useCallCallingState } = useCallStateHooks();
+  const callingState = useCallCallingState();
+  if (callingState !== CallingState.JOINED) return <Loader />;
 
   const CallLayout = () => {
     switch (layout) {
@@ -49,7 +60,7 @@ const MeetingRoom = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-0 flex w-full items-center justify-center gap-5">
+      <div className="fixed bottom-0 flex flex-wrap w-full items-center justify-center gap-5">
         <CallControls />
         <DropdownMenu>
           <div className="flex items-center">
@@ -68,9 +79,10 @@ const MeetingRoom = () => {
                 >
                   {item}
                 </DropdownMenuItem>
+                <DropdownMenuSeparator className="border-dark-1" />
               </div>
             ))}
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="" />
           </DropdownMenuContent>
         </DropdownMenu>
         <CallStatsButton />
@@ -79,6 +91,7 @@ const MeetingRoom = () => {
             <Users size={20} className="text-white" />
           </div>
         </button>
+        {!isPersonalRoom && <EndCallButton />}
       </div>
     </section>
   );
